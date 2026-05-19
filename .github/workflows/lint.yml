@@ -1,0 +1,48 @@
+name: Lint (Pre-Merge)
+
+on:
+  pull_request:
+    branches:
+      - ae-dev
+      - ae-uat
+      - ae-preprod
+      - ae-prod
+      - eu-dev
+      - eu-uat
+      - eu-preprod
+      - eu-prod
+  workflow_dispatch: {}
+
+jobs:
+  lint:
+    name: Lint Code
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Lint Code Base
+        uses: github/super-linter@v5
+        env:
+          DEFAULT_BRANCH: main
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VALIDATE_ALL_CODEBASE: false
+          VALIDATE_RUBY: true
+          VALIDATE_ERB: true
+          VALIDATE_YAML: true
+          VALIDATE_JSON: true
+          VALIDATE_MARKDOWN: true
+          VALIDATE_BASH: true
+          VALIDATE_DOCKERFILE: true
+          CONTINUE_ON_ERROR: false
+
+      - name: Output lint status
+        if: always()
+        run: |
+          echo "----------------------------------------"
+          echo "Lint (Pre-Merge) completed"
+          echo "----------------------------------------"
