@@ -1,0 +1,43 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - ae-dev
+      - ae-uat
+      - ae-preprod
+      - ae-prod
+      - eu-dev
+      - eu-uat
+      - eu-preprod
+      - eu-prod
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+  packages: write
+  actions: write
+  security-events: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build_ci:
+    name: Code Build
+    uses: ./.github/workflows/build-ci.yml
+    secrets: inherit
+    with:
+      image_tag: ${{ github.sha }}
+
+  deploy_cd:
+    name: Deployment
+    needs: [build_ci]
+    uses: ./.github/workflows/deploy-cd.yml
+    secrets: inherit
+    with:
+      image_tag: ${{ github.sha }}
+      namespace: ${{ github.ref_name }}
