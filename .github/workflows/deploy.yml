@@ -4,8 +4,9 @@ name: deploy
 #   vars.AWS_REGION, vars.AWS_ROLE_TO_ASSUME, vars.ECR_REPOSITORY
 #   vars.HELM_CHARTS_REPO, vars.HELM_CHART_PATH
 #
-# Required secret (repo or environment):
-#   secrets.HELM_REPO_TOKEN — PAT with read/write on HELM_CHARTS_REPO
+# Required secret (repo or environment; zand1-token PAT recommended):
+#   secrets.ZAND1_TOKEN or secrets.HELM_REPO_TOKEN
+#   Fine-grained PAT on qashio/helm-charts: Contents Read+Write, Metadata Read
 
 on:
   push:
@@ -67,12 +68,14 @@ jobs:
     steps:
       - name: Validate required configuration
         env:
+          ZAND1_TOKEN: ${{ secrets.ZAND1_TOKEN }}
           HELM_REPO_TOKEN: ${{ secrets.HELM_REPO_TOKEN }}
         run: |
+          HELM_GIT_TOKEN="${ZAND1_TOKEN:-$HELM_REPO_TOKEN}"
           MISSING=()
           [[ -z "$HELM_CHARTS_REPO" ]] && MISSING+=("vars.HELM_CHARTS_REPO")
           [[ -z "$HELM_CHART_PATH"  ]] && MISSING+=("vars.HELM_CHART_PATH")
-          [[ -z "$HELM_REPO_TOKEN"  ]] && MISSING+=("secrets.HELM_REPO_TOKEN")
+          [[ -z "$HELM_GIT_TOKEN"   ]] && MISSING+=("secrets.ZAND1_TOKEN or secrets.HELM_REPO_TOKEN")
           [[ -z "$ECR_REPOSITORY"   ]] && MISSING+=("vars.ECR_REPOSITORY")
           if [[ ${#MISSING[@]} -gt 0 ]]; then
             echo "ERROR: Missing required configuration for environment '$ENVIRONMENT':" >&2
@@ -86,7 +89,7 @@ jobs:
         with:
           repository: ${{ env.HELM_CHARTS_REPO }}
           ref: ${{ env.HELM_CHARTS_REF }}
-          token: ${{ secrets.HELM_REPO_TOKEN }}
+          token: ${{ secrets.ZAND1_TOKEN || secrets.HELM_REPO_TOKEN }}
           path: helm-charts
 
       - name: Modify deployment manifest
