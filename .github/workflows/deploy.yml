@@ -3,6 +3,7 @@ name: deploy
 # Required GitHub Environment variables (per environment, e.g. ae-prod):
 #   vars.AWS_REGION, vars.AWS_ROLE_TO_ASSUME, vars.ECR_REPOSITORY
 #   vars.HELM_CHARTS_REPO, vars.HELM_CHART_PATH
+#   vars.HELM_CHARTS_REF (default: zeroandone — helm-charts Git branch for GitOps writes)
 #
 # Required secret (repo or environment; zand1-token PAT recommended):
 #   secrets.ZAND1_TOKEN or secrets.HELM_REPO_TOKEN
@@ -61,7 +62,7 @@ jobs:
       IMAGE_TAG: ${{ inputs.image_tag || needs.prepare.outputs.short_sha }}
       ENVIRONMENT: ${{ github.ref_name }}
       HELM_CHARTS_REPO: ${{ vars.HELM_CHARTS_REPO }}
-      HELM_CHARTS_REF: ${{ vars.HELM_CHARTS_REF || github.ref_name }}
+      HELM_CHARTS_REF: ${{ vars.HELM_CHARTS_REF || 'zeroandone' }}
       HELM_CHART_PATH: ${{ vars.HELM_CHART_PATH }}
       ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY }}
 
@@ -105,7 +106,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          sed -i "s|repository:.*|repository: ${ECR_REPOSITORY}|" "$VALUES_FILE"
+          sed -i "s|^  repository:.*|  repository: \"${ECR_REPOSITORY}\"|" "$VALUES_FILE"
           sed -i "s|^  tag:.*|  tag: \"${IMAGE_TAG}\"|" "$VALUES_FILE"
 
           git add "$VALUES_FILE"
