@@ -5,9 +5,9 @@ name: deploy
 #   vars.HELM_CHARTS_REPO, vars.HELM_CHART_PATH
 #   vars.HELM_CHARTS_REF (default: zeroandone — helm-charts Git branch for GitOps writes)
 #
-# Required secret for helm-charts GitOps (push to zeroandone):
-#   secrets.HELM_DEPLOY_KEY — SSH deploy key (read/write on qashio/helm-charts)
-# Fallback: secrets.ZAND1_TOKEN or secrets.HELM_REPO_TOKEN (PAT with Contents write)
+# Helm-charts GitOps auth (push to zeroandone) — use one of:
+#   secrets.ZAND1_TOKEN or secrets.HELM_REPO_TOKEN (preferred; classic PAT avoids org SSO)
+#   secrets.HELM_DEPLOY_KEY (SSH deploy key fallback; no SSO)
 
 on:
   push:
@@ -68,22 +68,44 @@ jobs:
 
     steps:
       - name: Validate required configuration
+        id: config
         env:
           HELM_DEPLOY_KEY: ${{ secrets.HELM_DEPLOY_KEY }}
+          ZAND1_TOKEN: ${{ secrets.ZAND1_TOKEN }}
+          HELM_REPO_TOKEN: ${{ secrets.HELM_REPO_TOKEN }}
         run: |
           MISSING=()
           [[ -z "$HELM_CHARTS_REPO" ]] && MISSING+=("vars.HELM_CHARTS_REPO")
           [[ -z "$HELM_CHART_PATH"  ]] && MISSING+=("vars.HELM_CHART_PATH")
           [[ -z "$ECR_REPOSITORY"   ]] && MISSING+=("vars.ECR_REPOSITORY")
-          [[ -z "$HELM_DEPLOY_KEY"  ]] && MISSING+=("secrets.HELM_DEPLOY_KEY")
+
+          if [[ -n "${ZAND1_TOKEN:-}" || -n "${HELM_REPO_TOKEN:-}" ]]; then
+            echo "auth=pat" >> "$GITHUB_OUTPUT"
+            echo "Configuration OK — ${HELM_CHARTS_REPO} @ ${HELM_CHARTS_REF} (PAT)"
+          elif [[ -n "$HELM_DEPLOY_KEY" ]]; then
+            echo "auth=ssh" >> "$GITHUB_OUTPUT"
+            echo "Configuration OK — ${HELM_CHARTS_REPO} @ ${HELM_CHARTS_REF} (SSH deploy key)"
+          else
+            MISSING+=("secrets.ZAND1_TOKEN or secrets.HELM_REPO_TOKEN (or secrets.HELM_DEPLOY_KEY)")
+          fi
+
           if [[ ${#MISSING[@]} -gt 0 ]]; then
             echo "ERROR: Missing required configuration for environment '$ENVIRONMENT':" >&2
             printf '  - %s\n' "${MISSING[@]}" >&2
             exit 1
           fi
-          echo "Configuration OK — ${HELM_CHARTS_REPO} @ ${HELM_CHARTS_REF} (SSH deploy key)"
 
-      - name: Checkout Helm charts repo
+      - name: Checkout Helm charts repo (PAT)
+        if: steps.config.outputs.auth == 'pat'
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.HELM_CHARTS_REPO }}
+          ref: ${{ env.HELM_CHARTS_REF }}
+          token: ${{ secrets.ZAND1_TOKEN || secrets.HELM_REPO_TOKEN }}
+          path: helm-charts
+
+      - name: Checkout Helm charts repo (SSH deploy key)
+        if: steps.config.outputs.auth == 'ssh'
         uses: actions/checkout@v4
         with:
           repository: ${{ env.HELM_CHARTS_REPO }}
