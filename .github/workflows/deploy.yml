@@ -5,9 +5,9 @@ name: deploy
 #   vars.HELM_CHARTS_REPO, vars.HELM_CHART_PATH
 #   vars.HELM_CHARTS_REF (default: zeroandone — helm-charts Git branch for GitOps writes)
 #
-# Required secret (repo or environment; zand1-token PAT recommended):
-#   secrets.ZAND1_TOKEN or secrets.HELM_REPO_TOKEN
-#   Fine-grained PAT on qashio/helm-charts: Contents Read+Write, Metadata Read
+# Required secret for helm-charts GitOps (push to zeroandone):
+#   secrets.HELM_DEPLOY_KEY — SSH deploy key (read/write on qashio/helm-charts)
+# Fallback: secrets.ZAND1_TOKEN or secrets.HELM_REPO_TOKEN (PAT with Contents write)
 
 on:
   push:
@@ -69,28 +69,26 @@ jobs:
     steps:
       - name: Validate required configuration
         env:
-          ZAND1_TOKEN: ${{ secrets.ZAND1_TOKEN }}
-          HELM_REPO_TOKEN: ${{ secrets.HELM_REPO_TOKEN }}
+          HELM_DEPLOY_KEY: ${{ secrets.HELM_DEPLOY_KEY }}
         run: |
-          HELM_GIT_TOKEN="${ZAND1_TOKEN:-$HELM_REPO_TOKEN}"
           MISSING=()
           [[ -z "$HELM_CHARTS_REPO" ]] && MISSING+=("vars.HELM_CHARTS_REPO")
           [[ -z "$HELM_CHART_PATH"  ]] && MISSING+=("vars.HELM_CHART_PATH")
-          [[ -z "$HELM_GIT_TOKEN"   ]] && MISSING+=("secrets.ZAND1_TOKEN or secrets.HELM_REPO_TOKEN")
           [[ -z "$ECR_REPOSITORY"   ]] && MISSING+=("vars.ECR_REPOSITORY")
+          [[ -z "$HELM_DEPLOY_KEY"  ]] && MISSING+=("secrets.HELM_DEPLOY_KEY")
           if [[ ${#MISSING[@]} -gt 0 ]]; then
             echo "ERROR: Missing required configuration for environment '$ENVIRONMENT':" >&2
             printf '  - %s\n' "${MISSING[@]}" >&2
             exit 1
           fi
-          echo "Configuration OK — ${HELM_CHARTS_REPO} @ ${HELM_CHARTS_REF}"
+          echo "Configuration OK — ${HELM_CHARTS_REPO} @ ${HELM_CHARTS_REF} (SSH deploy key)"
 
       - name: Checkout Helm charts repo
         uses: actions/checkout@v4
         with:
           repository: ${{ env.HELM_CHARTS_REPO }}
           ref: ${{ env.HELM_CHARTS_REF }}
-          token: ${{ secrets.ZAND1_TOKEN || secrets.HELM_REPO_TOKEN }}
+          ssh-key: ${{ secrets.HELM_DEPLOY_KEY }}
           path: helm-charts
 
       - name: Modify deployment manifest
