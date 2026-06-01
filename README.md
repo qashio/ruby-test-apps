@@ -1,4 +1,4 @@
-### Ruby On Rails implementation of RealWorld app
+### Ruby On Rails implementation of RealWorld app !
 
 This Rails app is part of the [RealWorld](https://github.com/gothinkster/realworld) project.
 
