@@ -72,7 +72,7 @@ GEM
     builder (3.2.4)
     concurrent-ruby (1.1.10)
     crass (1.0.6)
-    date (3.3.3)
+    date (3.5.1)
     debug (1.7.1)
       irb (>= 1.5.0)
       reline (>= 0.3.1)
@@ -88,29 +88,33 @@ GEM
     irb (1.6.2)
       reline (>= 0.3.0)
     jwt (2.6.0)
+    logger (1.7.0)
     loofah (2.19.1)
       crass (~> 1.0.2)
       nokogiri (>= 1.5.9)
-    mail (2.8.0)
+    mail (2.9.0)
+      logger
       mini_mime (>= 0.1.1)
       net-imap
       net-pop
       net-smtp
     marcel (1.0.2)
     method_source (1.0.0)
-    mini_mime (1.1.2)
+    mini_mime (1.1.5)
     minitest (5.17.0)
     msgpack (1.6.0)
-    net-imap (0.3.4)
+    net-imap (0.5.14)
       date
       net-protocol
     net-pop (0.1.2)
       net-protocol
-    net-protocol (0.2.1)
+    net-protocol (0.2.2)
       timeout
-    net-smtp (0.3.3)
+    net-smtp (0.5.1)
       net-protocol
     nio4r (2.5.8)
+    nokogiri (1.13.10-aarch64-linux)
+      racc (~> 1.4)
     nokogiri (1.13.10-x86_64-linux)
       racc (~> 1.4)
     puma (5.6.5)
@@ -148,9 +152,10 @@ GEM
     rake (13.0.6)
     reline (0.3.2)
       io-console (~> 0.5)
+    sqlite3 (1.5.4-aarch64-linux)
     sqlite3 (1.5.4-x86_64-linux)
     thor (1.2.1)
-    timeout (0.3.1)
+    timeout (0.6.1)
     tzinfo (2.0.5)
       concurrent-ruby (~> 1.0)
     websocket-driver (0.7.5)
@@ -159,6 +164,7 @@ GEM
     zeitwerk (2.6.6)
 
 PLATFORMS
+  aarch64-linux
   x86_64-linux
 
 DEPENDENCIES
@@ -167,6 +173,7 @@ DEPENDENCIES
   debug
   gwt
   jwt (~> 2.6)
+  mail (>= 2.8.1)
   puma (~> 5.0)
   rails (~> 7.0.4)
   sqlite3 (~> 1.4)

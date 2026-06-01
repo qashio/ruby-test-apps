@@ -18,7 +18,9 @@ RUN bundle install && \
 
 COPY . .
 
-RUN bundle exec bootsnap precompile --gemfile app/ lib/
+# Precompile app code only; --gemfile breaks mail/actionmailer eager load in production.
+RUN bundle exec bootsnap precompile app/ lib/ && \
+    rm -rf tmp/cache
 
 FROM ruby:3.1.3-slim
 
