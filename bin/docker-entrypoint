@@ -2,6 +2,13 @@
 set -e
 
 if [ "${1}" = "bundle" ] && [ "${2}" = "exec" ] && [ "${3}" = "puma" ]; then
+  if [ -z "${SECRET_KEY_BASE:-}" ]; then
+    echo "ERROR: SECRET_KEY_BASE must be set in production (e.g. Kubernetes secret or docker run -e)." >&2
+    exit 1
+  fi
+
+  mkdir -p tmp/pids tmp/cache tmp/sockets db log storage
+
   bundle exec rails db:prepare
 fi
 
