@@ -22,7 +22,7 @@ on:
   workflow_dispatch:
     inputs:
       image_tag:
-        description: 'Override image tag (leave blank to use short commit SHA)'
+        description: 'Override image tag (leave blank to use {branch}-{commit-sha})'
         required: false
         type: string
 
@@ -38,10 +38,17 @@ jobs:
   prepare:
     runs-on: ubuntu-latest
     outputs:
-      short_sha: ${{ steps.sha.outputs.short_sha }}
+      image_tag: ${{ steps.tag.outputs.image_tag }}
     steps:
-      - id: sha
-        run: echo "short_sha=${GITHUB_SHA:0:7}" >> "$GITHUB_OUTPUT"
+      - id: tag
+        run: |
+          if [[ "${{ github.ref_type }}" == "tag" ]]; then
+            IMAGE_TAG="${{ github.ref_name }}"
+          else
+            IMAGE_TAG="${{ github.ref_name }}-${{ github.sha }}"
+          fi
+          echo "image_tag=${IMAGE_TAG}" >> "$GITHUB_OUTPUT"
+          echo "ECR image tag: ${IMAGE_TAG}"
 
   build:
     name: Build & Push to ECR
@@ -49,7 +56,7 @@ jobs:
     uses: ./.github/workflows/build-ci.yml
     secrets: inherit
     with:
-      image_tag: ${{ inputs.image_tag || needs.prepare.outputs.short_sha }}
+      image_tag: ${{ inputs.image_tag || needs.prepare.outputs.image_tag }}
 
   update-manifest:
     name: Update Helm Manifest (GitOps)
@@ -58,7 +65,7 @@ jobs:
     environment: ${{ github.ref_name }}
 
     env:
-      IMAGE_TAG: ${{ inputs.image_tag || needs.prepare.outputs.short_sha }}
+      IMAGE_TAG: ${{ inputs.image_tag || needs.prepare.outputs.image_tag }}
       ENVIRONMENT: ${{ github.ref_name }}
       HELM_CHARTS_REPO: ${{ vars.HELM_CHARTS_REPO }}
       HELM_CHARTS_REF: ${{ vars.HELM_CHARTS_REF || 'zeroandone' }}
