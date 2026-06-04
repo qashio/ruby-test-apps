@@ -13,8 +13,8 @@ env:
   railsLogToStdout: "1"
   port: "3000"
 
-# ESO (optional): only rendered when this `eso` block exists with enabled + remotePath.
-# Omit the whole `eso` block in other env files to skip ExternalSecret entirely.
+# ESO (optional): only when this block exists with enabled: true + remotePath.
+# Omit `eso` in other env files to skip ExternalSecret (same pattern as helm-charts rails-common).
 eso:
   enabled: true
   refreshInterval: 5m
