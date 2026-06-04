@@ -1,12 +1,15 @@
 name: deploy
 
-# Required GitHub Environment variables (per environment, e.g. ae-prod):
+# GitHub Environment (e.g. ae-prod) variables:
 #   vars.AWS_REGION, vars.AWS_ROLE_TO_ASSUME, vars.ECR_REPOSITORY
-#   vars.HELM_CHARTS_REPO, vars.HELM_CHART_PATH
-#   vars.HELM_CHARTS_REF (default: zeroandone — helm-charts Git branch for GitOps writes)
+#   vars.HELM_CHARTS_REPO (qashio/helm-charts)
+#   vars.HELM_CHARTS_REF (devops-refactor)
+#   vars.HELM_CHART_PATH (apps/production/ruby-test-apps/ae-prod-values.yaml)
+#   vars.SERVICE_NAME (ruby-test-apps)
 #
-# Required secret for helm-charts GitOps (checkout + push to zeroandone):
-#   secrets.HELM_REPO_TOKEN — PAT with repo write access on qashio/helm-charts
+# Secret: secrets.HELM_REPO_TOKEN — PAT with write on qashio/helm-charts
+#
+# ECR/helm image tag: {branch}-{full-commit-sha} e.g. ae-prod-b37775a...
 
 on:
   push:
@@ -67,9 +70,10 @@ jobs:
     env:
       IMAGE_TAG: ${{ inputs.image_tag || needs.prepare.outputs.image_tag }}
       ENVIRONMENT: ${{ github.ref_name }}
-      HELM_CHARTS_REPO: ${{ vars.HELM_CHARTS_REPO }}
-      HELM_CHARTS_REF: ${{ vars.HELM_CHARTS_REF || 'zeroandone' }}
-      HELM_CHART_PATH: ${{ vars.HELM_CHART_PATH }}
+      SERVICE_NAME: ${{ vars.SERVICE_NAME || 'ruby-test-apps' }}
+      HELM_CHARTS_REPO: ${{ vars.HELM_CHARTS_REPO || 'qashio/helm-charts' }}
+      HELM_CHARTS_REF: ${{ vars.HELM_CHARTS_REF || 'devops-refactor' }}
+      HELM_CHART_PATH: ${{ vars.HELM_CHART_PATH || 'apps/production/ruby-test-apps/ae-prod-values.yaml' }}
       ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY }}
 
     steps:
@@ -121,7 +125,7 @@ jobs:
             exit 0
           fi
 
-          git commit -m "deploy(ruby-test-apps): update ${ENVIRONMENT} image to ${IMAGE_TAG}"
+          git commit -m "deploy(${SERVICE_NAME}): update ${ENVIRONMENT} image tag ${IMAGE_TAG}"
           git push "https://x-access-token:${HELM_REPO_TOKEN}@github.com/${HELM_CHARTS_REPO}.git" "HEAD:${HELM_CHARTS_REF}"
 
       - name: Job summary
