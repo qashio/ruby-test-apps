@@ -3,6 +3,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: {{ include "ruby-test-apps.fullname" . }}
+  namespace: {{ include "ruby-test-apps.namespace" . }}
   labels:
     {{- include "ruby-test-apps.labels" . | nindent 4 }}
   {{- with .Values.ingress.annotations }}

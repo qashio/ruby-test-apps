@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ include "ruby-test-apps.fullname" . }}
+  namespace: {{ include "ruby-test-apps.namespace" . }}
   labels:
     {{- include "ruby-test-apps.labels" . | nindent 4 }}
 spec:
@@ -18,7 +19,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "ruby-test-apps.labels" . | nindent 8 }}
+        {{- include "ruby-test-apps.selectorLabels" . | nindent 8 }}
         {{- with .Values.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -28,6 +29,31 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       serviceAccountName: {{ include "ruby-test-apps.serviceAccountName" . }}
+      {{- if include "ruby-test-apps.esoWaitForSecret" . }}
+      initContainers:
+      - name: wait-for-secret
+        image: busybox:1.36
+        command:
+        - sh
+        - -c
+        - |
+          echo "Waiting for {{ include "ruby-test-apps.esoTargetSecretName" . }}..."
+          timeout={{ default 300 .Values.eso.waitForSecretTimeoutSeconds }}
+          elapsed=0
+          while [ "$(ls -A /mnt/app-secrets 2>/dev/null | wc -l)" -eq 0 ]; do
+            sleep 3
+            elapsed=$((elapsed + 3))
+            if [ "$elapsed" -ge "$timeout" ]; then
+              echo "Timed out waiting for {{ include "ruby-test-apps.esoTargetSecretName" . }}"
+              exit 1
+            fi
+          done
+          echo "{{ include "ruby-test-apps.esoTargetSecretName" . }} available."
+        volumeMounts:
+        - name: app-secrets
+          mountPath: /mnt/app-secrets
+          readOnly: true
+      {{- end }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
@@ -47,18 +73,10 @@ spec:
               value: {{ .Values.env.railsLogToStdout | quote }}
             - name: PORT
               value: {{ .Values.env.port | quote }}
-            - name: SECRET_KEY_BASE
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "ruby-test-apps.fullname" . }}
-                  key: SECRET_KEY_BASE
-            {{- if .Values.railsMasterKey }}
-            - name: RAILS_MASTER_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "ruby-test-apps.fullname" . }}
-                  key: RAILS_MASTER_KEY
-            {{- end }}
+          envFrom:
+            - secretRef:
+                name: {{ include "ruby-test-apps.appSecretName" . }}
+                optional: {{ not (include "ruby-test-apps.esoEnabled" .) }}
           {{- with .Values.livenessProbe }}
           livenessProbe:
             {{- toYaml . | nindent 12 }}
@@ -75,11 +93,17 @@ spec:
               mountPath: {{ .Values.persistence.mountPath }}
             {{- end }}
       volumes:
-        {{- if .Values.persistence.enabled }}
-        - name: data
-          persistentVolumeClaim:
-            claimName: {{ include "ruby-test-apps.fullname" . }}
-        {{- end }}
+      {{- if include "ruby-test-apps.esoWaitForSecret" . }}
+      - name: app-secrets
+        secret:
+          secretName: {{ include "ruby-test-apps.esoTargetSecretName" . }}
+          optional: true
+      {{- end }}
+      {{- if .Values.persistence.enabled }}
+      - name: data
+        persistentVolumeClaim:
+          claimName: {{ include "ruby-test-apps.fullname" . }}
+      {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

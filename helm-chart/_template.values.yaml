@@ -1,0 +1,21 @@
+# Copy when adding a new env overlay (e.g. ae-uat-values.yaml).
+# Not used by Helm/Argo automatically — documentation starter only.
+#
+# Service identity lives in values.service.yaml (app, project, eso.targetSecretName).
+# Chart defaults live in values.yaml (eso disabled by default).
+#
+# Env overlay example:
+#
+# namespace: ae-prod-v2
+#
+# image:
+#   repository: "ACCOUNT.dkr.ecr.REGION.amazonaws.com/ae-prod/ruby-test-apps"
+#   tag: "latest"
+#
+# eso:
+#   enabled: true
+#   remotePathPrefix: ae-prod-v2/ruby-test-apps
+#   waitForSecret: true
+#
+# persistence:
+#   enabled: false

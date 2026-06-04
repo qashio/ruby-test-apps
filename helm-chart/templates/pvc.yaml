@@ -3,6 +3,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: {{ include "ruby-test-apps.fullname" . }}
+  namespace: {{ include "ruby-test-apps.namespace" . }}
   labels:
     {{- include "ruby-test-apps.labels" . | nindent 4 }}
 spec:

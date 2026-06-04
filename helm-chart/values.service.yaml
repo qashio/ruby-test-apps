@@ -1,0 +1,12 @@
+# Service identity — merge with values.yaml for every install.
+# Sync with helm-charts: apps/production/ruby-test-apps/values.yaml
+
+project:
+  repoName: ruby-test-apps
+
+serviceAccount:
+  create: true
+  name: ruby-test-apps-sa
+
+eso:
+  targetSecretName: ruby-test-apps-secrets

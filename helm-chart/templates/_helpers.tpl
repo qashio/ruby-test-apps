@@ -42,14 +42,52 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
-  ESO only when the env values file defines an `eso` block with enabled: true and remotePath.
-  If `eso` is omitted entirely, no ExternalSecret is rendered (deployment is not blocked).
+  Target namespace — set in env overlay (e.g. ae-prod-values.yaml).
+*/}}
+{{- define "ruby-test-apps.namespace" -}}
+{{- default .Release.Namespace .Values.namespace -}}
+{{- end }}
+
+{{/*
+  ESO opt-in: enabled only when env values file sets eso.enabled: true.
 */}}
 {{- define "ruby-test-apps.esoEnabled" -}}
 {{- $eso := .Values.eso -}}
-{{- if and $eso $eso.enabled $eso.remotePath -}}true{{- end -}}
+{{- if and $eso $eso.enabled -}}true{{- end -}}
 {{- end -}}
+
+{{- define "ruby-test-apps.esoWaitForSecret" -}}
+{{- if and (include "ruby-test-apps.esoEnabled" .) .Values.eso.waitForSecret -}}true{{- end -}}
+{{- end -}}
+
+{{/*
+  AWS Secrets Manager path. Default: <namespace>/<project.repoName>. Override: eso.remotePathPrefix.
+*/}}
+{{- define "ruby-test-apps.esoRemotePath" -}}
+{{- $ns := include "ruby-test-apps.namespace" . -}}
+{{- $repo := .Values.project.repoName | default .Chart.Name -}}
+{{- default (printf "%s/%s" $ns $repo) .Values.eso.remotePathPrefix -}}
+{{- end }}
+
+{{/*
+  K8s Secret synced from ESO (ExternalSecret spec.target.name).
+*/}}
+{{- define "ruby-test-apps.esoTargetSecretName" -}}
+{{- if .Values.eso.targetSecretName -}}
+{{- .Values.eso.targetSecretName -}}
+{{- else -}}
+{{- include "ruby-test-apps.fullname" . -}}
+{{- end -}}
+{{- end }}
 
 {{- define "ruby-test-apps.useInlineSecret" -}}
 {{- if and (not (include "ruby-test-apps.esoEnabled" .)) .Values.secretKeyBase -}}true{{- end -}}
+{{- end }}
+
+{{- define "ruby-test-apps.appSecretName" -}}
+{{- if include "ruby-test-apps.esoEnabled" . -}}
+{{- include "ruby-test-apps.esoTargetSecretName" . -}}
+{{- else -}}
+{{- include "ruby-test-apps.fullname" . -}}
 {{- end -}}
+{{- end }}
