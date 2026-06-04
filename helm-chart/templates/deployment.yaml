@@ -75,7 +75,7 @@ spec:
               value: {{ .Values.env.port | quote }}
           envFrom:
             - secretRef:
-                name: {{ include "ruby-test-apps.appSecretName" . }}
+                name: {{ include "ruby-test-apps.esoTargetSecretName" . }}
                 optional: {{ not (include "ruby-test-apps.esoEnabled" .) }}
           {{- with .Values.livenessProbe }}
           livenessProbe:

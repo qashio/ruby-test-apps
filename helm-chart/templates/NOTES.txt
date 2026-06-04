@@ -3,10 +3,13 @@
    docker build -t {{ .Values.image.repository }}:{{ .Values.image.tag }} .
    docker push {{ .Values.image.repository }}:{{ .Values.image.tag }}
 
-2. Install the chart (SECRET_KEY_BASE is required):
+2. Install the chart (secrets via ESO — do not set secret values in Helm):
 
    helm upgrade --install {{ .Release.Name }} ./helm-chart \
-     --set secretKeyBase=$(openssl rand -hex 64)
+     -f helm-chart/values.service.yaml \
+     -f helm-chart/ae-prod-values.yaml
+
+   Ensure AWS Secrets Manager has the path from eso.remotePathPrefix (or <namespace>/<repoName>).
 
 3. Access the API:
 
@@ -15,13 +18,13 @@
   http{{ if $.Values.ingress.tls }}s{{ end }}://{{ $host.host }}/api/articles
 {{- end }}
 {{- else if contains "NodePort" .Values.service.type }}
-  export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ include "ruby-test-apps.fullname" . }})
+  export NODE_PORT=$(kubectl get --namespace {{ include "ruby-test-apps.namespace" . }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ include "ruby-test-apps.fullname" . }})
   export NODE_IP=$(kubectl get nodes -o jsonpath="{.items[0].status.addresses[0].address}")
   echo http://$NODE_IP:$NODE_PORT/api/articles
 {{- else if contains "LoadBalancer" .Values.service.type }}
   NOTE: It may take a few minutes for the LoadBalancer IP to be available.
-  kubectl get --namespace {{ .Release.Namespace }} svc -w {{ include "ruby-test-apps.fullname" . }}
+  kubectl get --namespace {{ include "ruby-test-apps.namespace" . }} svc -w {{ include "ruby-test-apps.fullname" . }}
 {{- else if contains "ClusterIP" .Values.service.type }}
-  kubectl port-forward --namespace {{ .Release.Namespace }} svc/{{ include "ruby-test-apps.fullname" . }} 3000:{{ .Values.service.port }}
+  kubectl port-forward --namespace {{ include "ruby-test-apps.namespace" . }} svc/{{ include "ruby-test-apps.fullname" . }} 3000:{{ .Values.service.port }}
   echo http://127.0.0.1:3000/api/articles
 {{- end }}

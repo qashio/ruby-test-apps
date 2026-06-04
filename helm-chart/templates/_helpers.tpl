@@ -80,14 +80,3 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end -}}
 {{- end }}
 
-{{- define "ruby-test-apps.useInlineSecret" -}}
-{{- if and (not (include "ruby-test-apps.esoEnabled" .)) .Values.secretKeyBase -}}true{{- end -}}
-{{- end }}
-
-{{- define "ruby-test-apps.appSecretName" -}}
-{{- if include "ruby-test-apps.esoEnabled" . -}}
-{{- include "ruby-test-apps.esoTargetSecretName" . -}}
-{{- else -}}
-{{- include "ruby-test-apps.fullname" . -}}
-{{- end -}}
-{{- end }}

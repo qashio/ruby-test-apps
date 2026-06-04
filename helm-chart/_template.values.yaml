@@ -1,8 +1,8 @@
 # Copy when adding a new env overlay (e.g. ae-uat-values.yaml).
 # Not used by Helm/Argo automatically — documentation starter only.
 #
-# Service identity lives in values.service.yaml (app, project, eso.targetSecretName).
-# Chart defaults live in values.yaml (eso disabled by default).
+# Service identity lives in values.service.yaml (project, serviceAccount, eso.targetSecretName).
+# Chart defaults live in values.yaml (eso disabled by default). No secret values in charts.
 #
 # Env overlay example:
 #

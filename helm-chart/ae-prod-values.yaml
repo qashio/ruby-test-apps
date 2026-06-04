@@ -24,9 +24,6 @@ eso:
   remotePathPrefix: ae-prod-v2/ruby-test-apps
   waitForSecret: true
 
-secretKeyBase: ""
-railsMasterKey: ""
-
 persistence:
   enabled: false
 

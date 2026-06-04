@@ -74,10 +74,7 @@ env:
   railsLogToStdout: "1"
   port: "3000"
 
-# Optional inline secret when ESO is off (local/dev)
-secretKeyBase: ""
-railsMasterKey: ""
-
+# Secrets are not set in chart values — use ESO (env overlay) or a pre-created K8s secret.
 # ESO off by default — enable only in env overlays (e.g. ae-prod-values.yaml).
 eso:
   enabled: false
