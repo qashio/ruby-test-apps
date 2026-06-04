@@ -40,3 +40,16 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{/*
+  ESO only when the env values file defines an `eso` block with enabled: true and remotePath.
+  If `eso` is omitted entirely, no ExternalSecret is rendered (deployment is not blocked).
+*/}}
+{{- define "ruby-test-apps.esoEnabled" -}}
+{{- $eso := .Values.eso -}}
+{{- if and $eso $eso.enabled $eso.remotePath -}}true{{- end -}}
+{{- end -}}
+
+{{- define "ruby-test-apps.useInlineSecret" -}}
+{{- if and (not (include "ruby-test-apps.esoEnabled" .)) .Values.secretKeyBase -}}true{{- end -}}
+{{- end -}}

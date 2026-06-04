@@ -74,19 +74,12 @@ env:
   railsLogToStdout: "1"
   port: "3000"
 
-# Inline K8s secret (only when eso.enabled is false)
+# Optional inline secret (only used when `eso` block is not enabled in env values)
 secretKeyBase: ""
 railsMasterKey: ""
 
-# External Secrets Operator — configure per env in ae-prod-values.yaml
-eso:
-  enabled: false
-  refreshInterval: 5m
-  secretStoreRef:
-    kind: ClusterSecretStore
-    name: aws-secretsmanager
-  # AWS Secrets Manager secret name/path (JSON with SECRET_KEY_BASE)
-  remotePath: ""
+# Optional: add `eso:` block only in env overlays (e.g. ae-prod-values.yaml).
+# If omitted, no ExternalSecret is created and deploy is not blocked by ESO.
 
 persistence:
   enabled: true

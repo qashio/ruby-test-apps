@@ -13,7 +13,8 @@ env:
   railsLogToStdout: "1"
   port: "3000"
 
-# ESO: AWS Secrets Manager → K8s secret "ruby-test-apps" (key: SECRET_KEY_BASE)
+# ESO (optional): only rendered when this `eso` block exists with enabled + remotePath.
+# Omit the whole `eso` block in other env files to skip ExternalSecret entirely.
 eso:
   enabled: true
   refreshInterval: 5m
