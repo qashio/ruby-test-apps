@@ -1,0 +1,33 @@
+# ae-prod overlay — sync to helm-charts:
+# apps/production/ruby-test-apps/ae-prod-values.yaml (branch: devops-refactor)
+
+replicaCount: 1
+
+image:
+  repository: "609790991041.dkr.ecr.eu-central-1.amazonaws.com/ae-prod/ruby-test-apps"
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+env:
+  railsEnv: production
+  railsLogToStdout: "1"
+  port: "3000"
+
+# ESO: AWS Secrets Manager → K8s secret "ruby-test-apps" (key: SECRET_KEY_BASE)
+eso:
+  enabled: true
+  refreshInterval: 5m
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: aws-secretsmanager
+  remotePath: ae-prod-v2/ruby-test-apps
+
+# Do not set secretKeyBase here when eso.enabled is true
+secretKeyBase: ""
+railsMasterKey: ""
+
+persistence:
+  enabled: false
+
+autoscaling:
+  enabled: false

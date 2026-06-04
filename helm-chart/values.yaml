@@ -74,12 +74,19 @@ env:
   railsLogToStdout: "1"
   port: "3000"
 
-# Required in production. Override at install time, e.g.:
-#   --set secretKeyBase=$(openssl rand -hex 64)
+# Inline K8s secret (only when eso.enabled is false)
 secretKeyBase: ""
-
-# Optional; only needed if config.require_master_key is enabled
 railsMasterKey: ""
+
+# External Secrets Operator — configure per env in ae-prod-values.yaml
+eso:
+  enabled: false
+  refreshInterval: 5m
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: aws-secretsmanager
+  # AWS Secrets Manager secret name/path (JSON with SECRET_KEY_BASE)
+  remotePath: ""
 
 persistence:
   enabled: true
